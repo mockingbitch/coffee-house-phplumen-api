@@ -17,12 +17,8 @@
 //     return $router->app->version();
 // });
 $router->group(['prefix' => 'api'], function () use ($router) {
-    // Author Test 
-    // $router->get('authors', ['uses' => 'AuthorController@showAllAuthors']);
-    // $router->get('authors/{id}', ['uses' => 'AuthorController@showOneAuthor']);
-    // $router->post('authors', ['uses' => 'AuthorController@create']);
-    // $router->delete('authors/{id}', ['uses' => 'AuthorController@delete']);
-    // $router->put('authors/{id}', ['uses' => 'AuthorController@update']);
+    //Authenticate
+    $router->post('/login', ['uses' => 'UserController@login']);
 
     // User 
     $router->get('users', ['uses' => 'UserController@index']);
@@ -35,4 +31,19 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->post('categories', ['uses' => 'CategoryController@create']);
     $router->put('categories', ['uses' => 'CategoryController@update']);
     $router->delete('categories', ['uses' => 'CategoryController@delete']);
+
+    // Product 
+    $router->get('products', ['uses' => 'ProductController@index']);
+    $router->post('products', ['uses' => 'ProductController@create']);
+    $router->put('products', ['uses' => 'ProductController@update']);
+    $router->delete('products', ['uses' => 'ProductController@delete']);
+
+    // Table 
+    $router->get('tables', ['uses' => 'TableController@index']);
+    $router->post('tables', ['uses' => 'TableController@create']);
+    $router->put('tables', ['uses' => 'TableController@update']);
+    $router->delete('tables', ['uses' => 'TableController@delete']);
+
+    // Cart
+    $router->post('carts', ['uses' => 'CartController@createCart']);
 });

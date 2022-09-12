@@ -48,16 +48,7 @@ $app->singleton(
     App\Console\Kernel::class
 );
 
-//Binding Repositories
-$models = [
-    'User',
-    'Category',
-    'Product',
-    'Table'
-];
-foreach ($models as $model) {
-    $app->bind("App\Repositories\Contracts\Interface\\{$model}RepositoryInterface", "App\Repositories\Contracts\Repository\\{$model}Repository");
-}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -71,7 +62,7 @@ foreach ($models as $model) {
 */
 
 $app->configure('app');
-
+$app->configure('jwt');
 /*
 |--------------------------------------------------------------------------
 | Register Middleware
@@ -87,9 +78,9 @@ $app->configure('app');
 //     App\Http\Middleware\ExampleMiddleware::class
 // ]);
 
-// $app->routeMiddleware([
-//     'auth' => App\Http\Middleware\Authenticate::class,
-// ]);
+$app->routeMiddleware([
+    'auth' => App\Http\Middleware\Authenticate::class,
+]);
 
 /*
 |--------------------------------------------------------------------------
@@ -102,8 +93,9 @@ $app->configure('app');
 |
 */
 
-// $app->register(App\Providers\AppServiceProvider::class);
-// $app->register(App\Providers\AuthServiceProvider::class);
+$app->register(App\Providers\AppServiceProvider::class);
+$app->register(App\Providers\AuthServiceProvider::class);
+$app->register(Tymon\JWTAuth\Providers\LumenServiceProvider::class);
 // $app->register(App\Providers\EventServiceProvider::class);
 
 /*

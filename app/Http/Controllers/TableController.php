@@ -48,12 +48,12 @@ class TableController extends Controller {
                 }
             }
 
-            $categories = $this->tableRepository->getAll();
+            $tables = $this->tableRepository->getAll();
 
             return response()->json([
                 'error' => 0,
                 'message' => 'ok',
-                'categories' => $categories
+                'tables' => $tables
             ], Response::HTTP_OK);
         } catch (\Throwable $th) {
             return response()->json([
