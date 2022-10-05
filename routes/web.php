@@ -44,6 +44,9 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->put('tables', ['uses' => 'TableController@update']);
     $router->delete('tables', ['uses' => 'TableController@delete']);
 
-    // Cart
-    $router->post('carts', ['uses' => 'CartController@createCartDetail']);
+    // Order
+    $router->post('orders', ['uses' => 'CartController@createOrder']);
+    $router->get('orders', ['uses' => 'CartController@showOrder']);
+    $router->put('orders', ['uses' => 'CartController@updateOrder']);
+    $router->get('checkout', ['uses' => 'CartController@checkout']);
 });
