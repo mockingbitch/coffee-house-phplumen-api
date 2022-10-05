@@ -14,6 +14,11 @@ class OrderDetail extends Model implements AuthenticatableContract, Authorizable
     use Authenticatable, Authorizable, HasFactory;
 
     /**
+     * @var string
+     */
+    protected $table = 'orderdetails';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var string[]

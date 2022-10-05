@@ -7,6 +7,7 @@ use Illuminate\Http\Response;
 use App\Repositories\Contracts\Interface\OrderRepositoryInterface;
 use App\Repositories\Contracts\Interface\OrderDetailRepositoryInterface;
 use App\Repositories\Contracts\Interface\ProductRepositoryInterface;
+use App\Repositories\Contracts\Interface\TableRepositoryInterface;
 use Validator;
 
 class OrderController extends Controller
@@ -27,19 +28,27 @@ class OrderController extends Controller
     protected $productRepository;
 
     /**
+     * @var tableRepository
+     */
+    protected $tableRepository;
+
+    /**
      * @param OrderRepositoryInterface $orderRepository
      * @param OrderDetailRepositoryInterface $orderDetailRepository
      * @param ProductRepositoryInterface $productRepository
+     * @param TableRepositoryInterface $tableRepository
      */
     public function __construct(
         OrderRepositoryInterface $orderRepository,
         OrderDetailRepositoryInterface $orderDetailRepository,
-        ProductRepositoryInterface $productRepository
+        ProductRepositoryInterface $productRepository,
+        TableRepositoryInterface $tableRepository
     )
     {
         $this->orderRepository = $orderRepository;
         $this->orderDetailRepository = $orderDetailRepository;
         $this->productRepository = $productRepository;
+        $this->tableRepository = $tableRepository;
     }
 
     /**
@@ -80,79 +89,84 @@ class OrderController extends Controller
 
     public function createOrder(Request $request) : JsonResponse
     {
-        //define user id
-        $guest_id = null;
-        $waiter_id = null;
+        try {
+            $user = auth()->user();
 
-        switch (auth()->user()->role) {
-            case 'ROLE_GUEST':
-                $guest_id = auth()->user()->id;
-                break;
-            case 'ROLE_WAITER':
-            case 'ROLE_MANAGER':
-            case 'ROLE_ADMIN':
-                $waiter_id = auth()->user()->id;
-                break;
-            default:
-            break;
+            if (! $this->tableRepository->find($request->table_id)) :
+                return $this->errorResponse('Could not find table');
+            endif;
+
+            if (null !== $user) :
+                $data = [
+                    'guest_id' => $user->role == 'ROLE_GUEST' ? $user->id : null,
+                    'waiter_id' => $user->role == 'ROLE_WAITER' || $user->role == 'ROLE_MANAGER' || $user->role == 'ROLE_ADMIN' ? $user->id : null,
+                    'table_id' => $request->table_id,
+                    'total' => 0,
+                    'note' => $request->note,
+                ];
+            else :
+                $data = [
+                    'table_id' => $request->table_id,
+                    'total' => 0,
+                    'note' => $request->note,
+                ];
+            endif;
+
+            if (! $order = $this->orderRepository->create($data)) :
+                return $this->errorResponse('Failed to create order');
+            endif;
+
+            $total = $this->createOrderDetail($order->id, $request);
+            
+            if (! $this->orderRepository->update($order->id, ['total' => $total])) :
+                return $this->errorResponse('Failed to update order total');
+            endif;
+
+            return $this->successResponse('Ok');
+        } catch (\Throwable $th) {
+            return $this->catchErrorResponse();
         }
-        
-        $data = [
-            'guest_id' => $guest_id,
-            'waiter_id' => $waiter_id,
-            'table_id' => $request->table_id,
-            'total' => 0,
-            'note' => $request->note,
-        ];
-
-        if (! $order = $this->orderRepository->create($data)) :
-            return $this->errorResponse('Failed to create order');
-        endif;
-
-        $total = $this->createOrderDetail($order->id, $request);
-        
-        if (! $this->orderRepository->update($order->id, ['total' => $total])) :
-            return $this->errorResponse('Failed to update order total');
-        endif;
-
-        return $this->successResponse('Ok');
     }
 
     /**
      * @param integer $order_id
      * @param object $request
      * 
-     * @return number
+     * @return float
      */
-    public function createOrderDetail(int $order_id, object $request) : number
+    public function createOrderDetail(int $order_id, object $request) : float
     {
-        $list_products_id = $request->data;
-        $quantity = 1;
-        $total = 0;
+        try {
+            $list_data = $request->data;
+            $total = 0;
 
-        //foreach list product from request
-        foreach ($list_products_id as $product_id) :
-            $product = $this->productRepository->find($product_id);
-            
-            if (! $product || null == $product) :
-                return $this->errorResponse('Resource not found');
-            endif;
+            //foreach list product from request
+            foreach ($list_data as $data) :
+                $product = $this->productRepository->find($data['product_id']);
+                
+                if (! $product || null == $product) :
+                    return $this->errorResponse('Resource not found');
+                endif;
+                
+                $data = [
+                    'order_id' => $order_id,
+                    'product_id' => $product->id,
+                    'quantity' => $data['quantity'],
+                    'total' => $product->price * (int) $data['quantity'],
+                    'note' => 'test'
+                ];
 
-            $data = [
-                'order_id' => $order_id,
-                'product_id' => $product->id,
-                'quantity' => $quantity,
-                'note' => 'test'
-            ];
+                if (! $this->orderDetailRepository->create($data)) :
+                    return $this->errorResponse('Failed to create order detail');
+                endif;
 
-            if (! $this->orderRepository->create($data)) :
-                return $this->errorResponse('Failed to create order detail');
-            endif;
+                $total += $product->price * (int) $data['quantity'];
+            endforeach;
 
-            $total = $product->price * $quantity;
-        endforeach;
-
-        return $total;
+            return $total;
+        } catch (\Throwable $th) {
+            return $this->catchErrorResponse();
+        }
     }
 
     /**
