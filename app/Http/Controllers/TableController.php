@@ -32,7 +32,7 @@ class TableController extends Controller {
     public function index(Request $request) : JsonResponse
     {
         try {
-            if ($request->query('id')) {
+            if ($request->query('id')) :
                 if ($table = $this->tableRepository->find($request->query('id'))) {
                     return response()->json([
                         'error' => 0,
@@ -40,13 +40,9 @@ class TableController extends Controller {
                         'table' => $table
                     ], Response::HTTP_OK);
                 } else {
-                    return response()->json([
-                        'error' => 1,
-                        'message' => 'Resource not found',
-                        'table' => null
-                    ], Response::HTTP_GATEWAY_TIMEOUT);
+                    return $this->errorResponse('Resource not found');
                 }
-            }
+            endif;
 
             $tables = $this->tableRepository->getAll();
 
@@ -56,10 +52,7 @@ class TableController extends Controller {
                 'tables' => $tables
             ], Response::HTTP_OK);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -76,29 +69,17 @@ class TableController extends Controller {
                 'description' => 'required|string'
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => $validator->errors()
-                ], 422);
-            }
+            if ($validator->fails()) :
+                return $this->exceptionResponse($validator->errors(), 422);
+            endif;
 
-            if (! $this->tableRepository->create($validator->validated())) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->tableRepository->create($validator->validated())) :
+                return $this->errorResponse('Failed to create table');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_CREATED);
+            return $this->successResponse('Ok', Response::HTTP_CREATED);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -111,34 +92,27 @@ class TableController extends Controller {
     {
         try {
             $table_id = $request->query('id');
+
+            if (! $this->tableRepository->find($table_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
+
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:1000',
                 'description' => 'required|string'
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => $validator->errors()
-                ], 422);
-            }
+            if ($validator->fails()) :
+                return $this->exceptionResponse($validator->errors(), 422);
+            endif;
 
-            if (! $this->tableRepository->update($table_id, $validator->validated())) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->tableRepository->update($table_id, $validator->validated())) :
+                return $this->errorResponse('Failed to create table');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_OK);
+            return $this->successResponse('Ok');
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -151,29 +125,18 @@ class TableController extends Controller {
     {
         try {
             $table_id = $request->query('id');
-            if (! $this->tableRepository->find($table_id)) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => 'Resource not found'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
 
-            if (! $this->tableRepository->delete($table_id)) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->tableRepository->find($table_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_OK);
+            if (! $this->tableRepository->delete($table_id)) :
+                return $this->errorResponse('Failed to delete table');
+            endif;
+
+            return $this->successResponse('Ok');
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 }

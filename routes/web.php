@@ -45,5 +45,5 @@ $router->group(['prefix' => 'api'], function () use ($router) {
     $router->delete('tables', ['uses' => 'TableController@delete']);
 
     // Cart
-    $router->post('carts', ['uses' => 'CartController@createCart']);
+    $router->post('carts', ['uses' => 'CartController@createCartDetail']);
 });

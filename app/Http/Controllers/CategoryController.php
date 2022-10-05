@@ -48,11 +48,7 @@ class CategoryController extends Controller {
                         'category' => $category
                     ], Response::HTTP_OK);
                 } else {
-                    return response()->json([
-                        'error' => 0,
-                        'message' => 'Resource not found',
-                        'category' => null
-                    ], Response::HTTP_GATEWAY_TIMEOUT);
+                    return $this->errorResponse('Resource not found');
                 }
             }
 
@@ -64,10 +60,7 @@ class CategoryController extends Controller {
                 'categories' => $categories
             ], Response::HTTP_OK);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -84,29 +77,17 @@ class CategoryController extends Controller {
                 'description' => 'required|string'
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => $validator->errors()
-                ], 422);
-            }
+            if ($validator->fails()) :
+                return $this->exceptionResponse($validator->errors(), 422);
+            endif;
 
-            if (! $this->categoryRepository->create($validator->validated())) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->categoryRepository->create($validator->validated())) :
+                return $this->errorResponse('Failed to create product');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_CREATED);
+            return $this->successResponse('Ok', Response::HTTP_CREATED);
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -119,34 +100,27 @@ class CategoryController extends Controller {
     {
         try {
             $category_id = $request->query('id');
+
+            if (! $this->categoryRepository->find($category_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
+
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:1000',
                 'description' => 'required|string'
             ]);
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => $validator->errors()
-                ], 422);
-            }
+            if ($validator->fails()) :
+                return $this->exceptionResponse($validator->errors(), 422);
+            endif;
 
-            if (! $this->categoryRepository->update($category_id, $validator->validated())) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->categoryRepository->update($category_id, $validator->validated())) :
+                return $this->errorResponse('Failed to update category');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_OK);
+            return $this->successResponse('Ok');
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 
@@ -160,38 +134,23 @@ class CategoryController extends Controller {
         try {
             $category_id = $request->query('id');
             
-            if (! $this->categoryRepository->find($category_id)) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => 'Resource not found'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->categoryRepository->find($category_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
 
             $products = $this->productRepository->getProductsByCategory($category_id);
 
-            if (count($products) > 0) {
-                return response()->json([
-                    'error' => 1,
-                    'message' => 'Danh mục hiện đang có sản phẩm, vui lòng xoá sản phẩm trước'
-                ], Response::HTTP_OK);
-            }
+            if (count($products) > 0) :
+                return $this->exceptionResponse('Danh mục hiện đang có sản phẩm, vui lòng xoá sản phẩm trước');
+            endif;
 
-            if (! $this->categoryRepository->delete($category_id)) {
-                return response()->json([
-                    'error' => 2,
-                    'message' => 'Something went wrong'
-                ], Response::HTTP_GATEWAY_TIMEOUT);
-            }
+            if (! $this->categoryRepository->delete($category_id)) :
+                return $this->errorResponse('Failed to delete category');
+            endif;
 
-            return response()->json([
-                'error' => 0,
-                'message' => 'ok'
-            ], Response::HTTP_OK);
+            return $this->successResponse('Ok');
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 3,
-                'message' => 'Catch error',
-            ], Response::HTTP_GATEWAY_TIMEOUT);
+            return $this->catchErrorResponse();
         }
     }
 }

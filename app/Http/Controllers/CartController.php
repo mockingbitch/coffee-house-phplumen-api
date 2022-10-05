@@ -72,8 +72,28 @@ class CartController extends Controller
         $cart = $this->cartRepository->create($data);
     }
 
-    public function createCartDetail(Request $request) 
+    /**
+     * undone quantity
+     *
+     * @param Request $request
+     * @return void
+     */
+    public function createCartDetail(Request $request) : JsonResponse
     {
-        
+        $list_products_id = $request->data;
+
+        foreach ($list_products_id as $product_id) :
+            $product = $this->productRepository->find($product_id);
+            
+            if ($product && $product != null) :
+                $cart = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => $product->price,
+                    'quantity'=> 1,
+                    'image' => $product->image
+                ];
+            endif;
+        endforeach;
     }
 }

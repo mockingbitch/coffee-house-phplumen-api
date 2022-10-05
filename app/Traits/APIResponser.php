@@ -33,7 +33,7 @@ trait APIResponser {
     protected function catchErrorResponse()
     {
         return response()->json([
-			'error'=> 2,
+			'error'=> 3,
 			'message' => 'Catch Error',
 		], Response::HTTP_GATEWAY_TIMEOUT);
     }

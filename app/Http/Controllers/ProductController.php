@@ -74,9 +74,9 @@ class ProductController extends Controller {
         try {
             $category_id = $request->category_id;
 
-            if (! $this->categoryRepository->find($category_id)) {
+            if (! $this->categoryRepository->find($category_id)) :
                 return $this->errorResponse('Category not found', 422);
-            }
+            endif;
 
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:1000',
@@ -87,15 +87,15 @@ class ProductController extends Controller {
                 'status' => 'string'
             ]);
 
-            if ($validator->fails()) {
+            if ($validator->fails()) :
                 return $this->exceptionResponse($validator->errors(), 422);
-            }
+            endif;
 
-            if (! $this->productRepository->create($validator->validated())) {
+            if (! $this->productRepository->create($validator->validated())) :
                 return $this->errorResponse('Failed to create product');
-            }
+            endif;
 
-            return $this->successReponse('Ok', Response::HTTP_CREATED);
+            return $this->successResponse('Ok', Response::HTTP_CREATED);
         } catch (\Throwable $th) {
             return $this->catchErrorResponse();
         }
@@ -110,18 +110,23 @@ class ProductController extends Controller {
     {
         try {
             $product_id = $request->query('id');
+
+            if (! $this->productRepository->find($product_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
+            
             $validator = Validator::make($request->all(), [
                 'name' => 'required|string|max:1000',
                 'description' => 'required|string'
             ]);
 
-            if ($validator->fails()) {
+            if ($validator->fails()) :
                 return $this->exceptionResponse($validator->errors(), 422);
-            }
+            endif;
 
-            if (! $this->productRepository->update($product_id, $validator->validated())) {
+            if (! $this->productRepository->update($product_id, $validator->validated())) :
                 return $this->errorResponse('Failed to update product');
-            }
+            endif;
 
             return $this->successResponse('Ok');
         } catch (\Throwable $th) {
@@ -138,15 +143,14 @@ class ProductController extends Controller {
     {
         try {
             $product_id = $request->query('id');
-            if (! $this->productRepository->find($product_id)) {
-                
-                return $this->errorResponse('Resource not found');
-            }
 
-            if (! $this->productRepository->delete($product_id)) {
-                
+            if (! $this->productRepository->find($product_id)) :
+                return $this->errorResponse('Resource not found');
+            endif;
+
+            if (! $this->productRepository->delete($product_id)) :
                 return $this->errorResponse('Failed to delete product');
-            }
+            endif;
 
             return $this->successResponse('Ok');
         } catch (\Throwable $th) {
